@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcul d'Aération</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input[type="number"], input[type="button"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        input[type="number"]:focus {
+            border-color: #5b9bd5;
+        }
+        .result {
+            background-color: #e0f7fa;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+        .result p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .result span {
+            font-weight: bold;
+            color: #00796b;
+        }
+    </style>
+</head>
+<body>
+    <!-- Formulaire sans champ pour la surface des ouvertures -->
+<div class="container">
+    <h1>Calcul du temps de refroidissement</h1>
+    <label for="volumePiece">Volume de la pièce (m³)</label>
+    <input type="number" id="volumePiece" placeholder="Entrez le volume de la pièce" required>
+    <label for="nombrePersonnes">Nombre de personnes</label>
+    <input type="number" id="nombrePersonnes" placeholder="Entrez le nombre de personnes" required>
+    <label for="temperatureInt">Température intérieure (°C)</label>
+    <input type="number" id="temperatureInt" placeholder="Température intérieure" required>
+    <label for="temperatureExt">Température extérieure (°C)</label>
+    <input type="number" id="temperatureExt" placeholder="Température extérieure" required>
+    <label for="temperatureCoul">Température du couloir (°C)</label>
+    <input type="number" id="temperatureCoul" placeholder="Température du couloir" required>
+    <label for="surfaceBaie">Surface des baies vitrées (m²)</label>
+    <input type="number" id="surfaceBaie" placeholder="Surface des baies vitrées" required>
+    <label for="surfaceMurs">Surface des murs (m²)</label>
+    <input type="number" id="surfaceMurs" placeholder="Surface des murs" required>
+    <input type="button" value="Calculer le temps" onclick="calculerAération()">
+    
+    <div class="result" id="resultats" style="display: none;">
+        <h2>Résultats</h2>
+        <p>Temps d'aération: <span id="tempsAeration"></span> secondes</p>
+    </div>
+</div>
+
+<script>
+function calculerAération() {
+    let volumePiece = parseFloat(document.getElementById('volumePiece').value);
+    let nombrePersonnes = parseFloat(document.getElementById('nombrePersonnes').value);
+    let temperatureInt = parseFloat(document.getElementById('temperatureInt').value);
+    let temperatureExt = parseFloat(document.getElementById('temperatureExt').value);
+    let temperatureCoul = parseFloat(document.getElementById('temperatureCoul').value);
+    let surfaceBaie = parseFloat(document.getElementById('surfaceBaie').value);
+    let surfaceMurs = parseFloat(document.getElementById('surfaceMurs').value);
+
+    if (isNaN(volumePiece) || isNaN(nombrePersonnes) || 
+        isNaN(temperatureInt) || isNaN(temperatureExt) || 
+        isNaN(temperatureCoul) || isNaN(surfaceBaie) || isNaN(surfaceMurs)) {
+        alert("Veuillez entrer des valeurs valides pour tous les champs.");
+        return;
+    }
+
+    let A = (nombrePersonnes * 100 + 11.522 * volumePiece) / (volumePiece * 1306);
+    let B = (0.2 / volumePiece) + ((1.5 * surfaceBaie) / (volumePiece * 1306)) + ((1.5 * surfaceMurs) / (volumePiece * 1306));
+    let C = (1.5 * surfaceMurs) / (volumePiece * 1306);
+    let k = (A + B * (temperatureExt + 273.15) + C * (temperatureCoul + 273.15)) / (B + C);
+
+    let T_initial = temperatureInt + 273.15;
+    let T_target = 19 + 273.15;
+
+    let t = 0;
+    let step = 5;
+    let T_t;
+
+    do {
+        t += step;
+        T_t = k * (1 - Math.exp(-t * (B + C))) + T_initial * Math.exp(-t * (B + C));
+    } while (T_t > T_target && t <= 86400);
+
+    if (T_t > T_target) {
+        document.getElementById('tempsAeration').innerText = "Plus de 24 heures (limite atteinte)";
+    } else {
+        document.getElementById('tempsAeration').innerText = t.toFixed(0) + " secondes";
+    }
+        document.getElementById('resultats').style.display = 'block';
+}
+</script>
+</body>
+</html>
